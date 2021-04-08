@@ -13,3 +13,7 @@ class Default(commands.Cog):
     async def ping(self, ctx):
         latency = round(self.bot.latency * 1000)
         await ctx.send(f'{latency} ms')
+
+    @commands.command()
+    async def whoisit(self, ctx):
+        await ctx.send(f'It is {ctx.message.author.mention}')
