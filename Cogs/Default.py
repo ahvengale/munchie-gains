@@ -17,3 +17,7 @@ class Default(commands.Cog):
     @commands.command()
     async def whoisit(self, ctx):
         await ctx.send(f'It is {ctx.message.author.mention}')
+
+    @commands.command()
+    async def echo(self, ctx, *, text):
+        await ctx.send(text)
