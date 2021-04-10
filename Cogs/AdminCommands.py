@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import discord
 import pymongo
 from pymongo import MongoClient
 
@@ -25,9 +26,11 @@ def isUserEnrolled(user):
     collection = db['members']
     results = collection.find({'discord_id':user})
     if results:
-        return True
-    else:
-        return False
+        for x in results:
+            if x:
+                return True
+            else:
+                return False
 
 def regex_parse(text):
     ret = []
@@ -59,7 +62,8 @@ class AdminCommands(commands.Cog):
         if isUserEnrolled(ctx.message.author.id):
             collection = db['members']
             post = {'discord_id':ctx.message.author.id}
-            collections.remove_one(post)
+            for x in collection.find(post):
+                collection.remove(x)
         else:
             await ctx.send('You were not enrolled anyways.')
 
@@ -81,7 +85,25 @@ class AdminCommands(commands.Cog):
     @commands.command()
     async def stop(self, ctx):
         if str(ctx.message.author.id) in log_temp.keys() and isUserEnrolled(ctx.message.author.id):
-            print(log_temp.pop(str(ctx.message.author.id)))
+            collection = db['workout-logs']
+            collection.insert_one(log_temp.pop(str(ctx.message.author.id)))
         else:
             await ctx.send('You were not logging a workout.')
+
+    @commands.command()
+    async def list(self, ctx):
+        collection = db['workout-logs']
+        res = collection.find({'discord_id':ctx.message.author.id})
+        for x in res:
+            await ctx.send(x)
+
+    @commands.command()
+    async def last(self, ctx):
+        collection = db['workout-logs']
+        res = collection.find({'discord_id':ctx.message.author.id}).sort('_id',-1).limit(1)
+        embed = discord.Embed(title=f'Last Workout', color = 0xFF5733)
+        for x in res:
+            for workout in x['workouts']:
+                embed.add_field(name = workout['workout'].title(), value = f"{workout['sets']} sets. {workout['reps']} reps per set. {workout['weight']} lbs. Comment: {workout['comments'].title()}", inline = False)
+        await ctx.send(embed=embed)
 
